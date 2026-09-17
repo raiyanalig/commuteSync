@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: commutesync-postgres
+    environment:
+      POSTGRES_DB: commutesync
+      POSTGRES_USER: commutesync
+      POSTGRES_PASSWORD: commutesync
+    ports:
+      - "5432:5432"
+    volumes:
+      - commutesync-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commutesync -d commutesync"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  commutesync-pgdata:
