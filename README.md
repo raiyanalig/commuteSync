@@ -693,7 +693,6 @@ Currently under development.
 
 The project is being built module by module instead of implementing everything at once.
 
-The main focus is on understanding the reason behind every component and being able to explain the complete system in a backend interview.
 
 ---
 
