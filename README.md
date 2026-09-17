@@ -665,33 +665,7 @@ The goal is to keep important business logic covered by tests, especially bookin
 
 ---
 
-## Roadmap
 
-* [ ] Project foundation
-* [ ] PostgreSQL integration
-* [ ] Authentication and JWT
-* [ ] Employee management
-* [ ] Driver management
-* [ ] Vehicle management
-* [ ] Route management
-* [ ] Stop management
-* [ ] Shift and schedule management
-* [ ] Trip management
-* [ ] Booking system
-* [ ] Vehicle allocation engine
-* [ ] Passenger management
-* [ ] Notifications
-* [ ] Admin dashboard APIs
-* [ ] Audit logging
-* [ ] Unit tests
-* [ ] Integration tests
-* [ ] Swagger documentation
-* [ ] Docker
-* [ ] CI/CD
-* [ ] Redis
-* [ ] Kafka
-* [ ] Real-time tracking
-* [ ] Microservice version
 
 
 
