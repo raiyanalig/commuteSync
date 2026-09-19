@@ -2,6 +2,7 @@ package com.commutesync.fleet.repository;
 
 import com.commutesync.fleet.domain.Vehicle;
 import com.commutesync.fleet.domain.VehicleStatus;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,8 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
     boolean existsByAssignedDriverId(Long driverId);
 
     Optional<Vehicle> findByAssignedDriverId(Long driverId);
+
+    List<Vehicle> findByStatusAndCapacityGreaterThanOrderByCapacityDesc(VehicleStatus status, int capacity);
 
     @EntityGraph(attributePaths = "assignedDriver")
     @Query("""

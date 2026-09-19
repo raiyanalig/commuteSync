@@ -3,6 +3,7 @@ package com.commutesync.employee.repository;
 import com.commutesync.employee.domain.Employee;
 import com.commutesync.employee.domain.EmployeeStatus;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +15,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     boolean existsByEmployeeCode(String employeeCode);
 
     boolean existsByEmail(String email);
+
+    Optional<Employee> findByEmail(String email);
 
     boolean existsByShiftId(Long shiftId);
 
