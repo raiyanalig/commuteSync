@@ -18,10 +18,15 @@ import com.commutesync.trip.domain.TripStatus;
 import com.commutesync.trip.dto.AssignTripRequest;
 import com.commutesync.trip.dto.CreateTripRequest;
 import com.commutesync.trip.dto.TripResponse;
+import com.commutesync.trip.event.TripAssignedEvent;
+import com.commutesync.trip.event.TripCancelledEvent;
+import com.commutesync.trip.event.TripCompletedEvent;
+import com.commutesync.trip.event.TripStartedEvent;
 import com.commutesync.trip.repository.TripRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,17 +40,20 @@ public class TripService {
     private final RouteRepository routeRepository;
     private final DriverRepository driverRepository;
     private final VehicleRepository vehicleRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public TripService(TripRepository tripRepository,
                        ScheduleRepository scheduleRepository,
                        RouteRepository routeRepository,
                        DriverRepository driverRepository,
-                       VehicleRepository vehicleRepository) {
+                       VehicleRepository vehicleRepository,
+                       ApplicationEventPublisher eventPublisher) {
         this.tripRepository = tripRepository;
         this.scheduleRepository = scheduleRepository;
         this.routeRepository = routeRepository;
         this.driverRepository = driverRepository;
         this.vehicleRepository = vehicleRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -133,7 +141,9 @@ public class TripService {
         if (trip.getStatus() == TripStatus.SCHEDULED) {
             trip.transitionTo(TripStatus.ASSIGNED);
         }
-        return TripResponse.from(tripRepository.save(trip));
+        Trip saved = tripRepository.save(trip);
+        eventPublisher.publishEvent(new TripAssignedEvent(saved.getId(), driver.getEmail()));
+        return TripResponse.from(saved);
     }
 
     @Transactional
@@ -142,7 +152,9 @@ public class TripService {
         requireDriverAndVehicle(trip);
         trip.transitionTo(TripStatus.STARTED);
         trip.setStartedAt(Instant.now());
-        return TripResponse.from(tripRepository.save(trip));
+        Trip saved = tripRepository.save(trip);
+        eventPublisher.publishEvent(new TripStartedEvent(saved.getId(), driverEmail(saved)));
+        return TripResponse.from(saved);
     }
 
     @Transactional
@@ -157,7 +169,9 @@ public class TripService {
         Trip trip = findWithDetails(id);
         trip.transitionTo(TripStatus.COMPLETED);
         trip.setCompletedAt(Instant.now());
-        return TripResponse.from(tripRepository.save(trip));
+        Trip saved = tripRepository.save(trip);
+        eventPublisher.publishEvent(new TripCompletedEvent(saved.getId(), driverEmail(saved)));
+        return TripResponse.from(saved);
     }
 
     @Transactional
@@ -166,7 +180,9 @@ public class TripService {
         trip.transitionTo(TripStatus.CANCELLED);
         trip.setCancelledAt(Instant.now());
         trip.setCancellationReason(trimToNull(reason));
-        return TripResponse.from(tripRepository.save(trip));
+        Trip saved = tripRepository.save(trip);
+        eventPublisher.publishEvent(new TripCancelledEvent(saved.getId(), driverEmail(saved), reason));
+        return TripResponse.from(saved);
     }
 
     @Transactional
@@ -219,6 +235,10 @@ public class TripService {
         if (trip.getDriver() == null || trip.getVehicle() == null) {
             throw new BusinessException("Trip must have both a driver and a vehicle before it can start");
         }
+    }
+
+    private String driverEmail(Trip trip) {
+        return trip.getDriver() == null ? null : trip.getDriver().getEmail();
     }
 
     private String trimToNull(String value) {

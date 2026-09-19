@@ -4,6 +4,8 @@ import com.commutesync.booking.domain.Booking;
 import com.commutesync.booking.domain.BookingStatus;
 import com.commutesync.booking.dto.AvailableTripResponse;
 import com.commutesync.booking.dto.BookingResponse;
+import com.commutesync.booking.event.BookingCancelledEvent;
+import com.commutesync.booking.event.BookingConfirmedEvent;
 import com.commutesync.booking.repository.BookingRepository;
 import com.commutesync.booking.repository.BookingRepository.TripSeatCount;
 import com.commutesync.common.api.PageResponse;
@@ -22,6 +24,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -37,13 +40,16 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final TripRepository tripRepository;
     private final EmployeeRepository employeeRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public BookingService(BookingRepository bookingRepository,
                           TripRepository tripRepository,
-                          EmployeeRepository employeeRepository) {
+                          EmployeeRepository employeeRepository,
+                          ApplicationEventPublisher eventPublisher) {
         this.bookingRepository = bookingRepository;
         this.tripRepository = tripRepository;
         this.employeeRepository = employeeRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -90,7 +96,10 @@ public class BookingService {
         booking.setCancellationReason(null);
         booking.setSeatNumber((int) confirmed + 1);
 
-        return BookingResponse.from(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+        eventPublisher.publishEvent(new BookingConfirmedEvent(
+                saved.getId(), trip.getId(), employee.getEmail()));
+        return BookingResponse.from(saved);
     }
 
     @Transactional(readOnly = true)
@@ -132,7 +141,10 @@ public class BookingService {
         booking.setCancellationReason(trimToNull(reason));
         booking.setSeatNumber(null); // release the seat for the unique constraint
 
-        return BookingResponse.from(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+        eventPublisher.publishEvent(new BookingCancelledEvent(
+                saved.getId(), saved.getTrip().getId(), saved.getEmployee().getEmail()));
+        return BookingResponse.from(saved);
     }
 
     private void ensureBookable(Trip trip) {
