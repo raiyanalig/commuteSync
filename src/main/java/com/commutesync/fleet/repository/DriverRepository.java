@@ -14,6 +14,10 @@ public interface DriverRepository extends JpaRepository<Driver, Long> {
 
     boolean existsByLicenseNumber(String licenseNumber);
 
+    long countByStatus(DriverStatus status);
+
+    long countByStatusAndAvailableTrue(DriverStatus status);
+
     @Query("""
             SELECT d FROM Driver d
             WHERE (:status IS NULL OR d.status = :status)

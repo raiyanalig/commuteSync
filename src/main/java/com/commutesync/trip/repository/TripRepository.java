@@ -4,6 +4,8 @@ import com.commutesync.trip.domain.Trip;
 import com.commutesync.trip.domain.TripStatus;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,4 +52,15 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
                       @Param("driverId") Long driverId,
                       @Param("vehicleId") Long vehicleId,
                       Pageable pageable);
+
+    long countByStatusIn(Collection<TripStatus> statuses);
+
+    long countByStatusInAndServiceDateGreaterThanEqual(Collection<TripStatus> statuses, LocalDate serviceDate);
+
+    @Query("""
+            SELECT t.status, COUNT(t) FROM Trip t
+            WHERE (:serviceDate IS NULL OR t.serviceDate = :serviceDate)
+            GROUP BY t.status
+            """)
+    List<Object[]> countGroupedByStatus(@Param("serviceDate") LocalDate serviceDate);
 }
