@@ -1,5 +1,7 @@
 package com.commutesync.fleet.service;
 
+import com.commutesync.audit.domain.AuditAction;
+import com.commutesync.audit.service.AuditService;
 import com.commutesync.common.api.PageResponse;
 import com.commutesync.common.exception.DuplicateResourceException;
 import com.commutesync.common.exception.ResourceInUseException;
@@ -19,9 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
+    private final AuditService auditService;
 
-    public VehicleService(VehicleRepository vehicleRepository) {
+    public VehicleService(VehicleRepository vehicleRepository, AuditService auditService) {
         this.vehicleRepository = vehicleRepository;
+        this.auditService = auditService;
     }
 
     @Transactional
@@ -39,7 +43,10 @@ public class VehicleService {
         vehicle.setCapacity(request.capacity());
         vehicle.setStatus(request.status() == null ? VehicleStatus.AVAILABLE : request.status());
 
-        return VehicleResponse.from(vehicleRepository.save(vehicle));
+        Vehicle saved = vehicleRepository.save(vehicle);
+        auditService.record(AuditAction.VEHICLE_CREATED, "VEHICLE", saved.getId(),
+                "Created vehicle " + saved.getRegistrationNumber());
+        return VehicleResponse.from(saved);
     }
 
     @Transactional(readOnly = true)

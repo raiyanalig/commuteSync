@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.commutesync.audit.service.AuditService;
 import com.commutesync.common.exception.DuplicateResourceException;
 import com.commutesync.common.exception.ResourceInUseException;
 import com.commutesync.common.exception.ResourceNotFoundException;
@@ -32,6 +33,9 @@ class VehicleServiceTest {
 
     @Mock
     private VehicleRepository vehicleRepository;
+
+    @Mock
+    private AuditService auditService;
 
     @InjectMocks
     private VehicleService vehicleService;

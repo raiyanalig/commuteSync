@@ -21,8 +21,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -94,7 +96,7 @@ public class BookingService {
         booking.setBookedAt(Instant.now());
         booking.setCancelledAt(null);
         booking.setCancellationReason(null);
-        booking.setSeatNumber((int) confirmed + 1);
+        booking.setSeatNumber(nextAvailableSeat(tripId, capacity));
 
         Booking saved = bookingRepository.save(booking);
         eventPublisher.publishEvent(new BookingConfirmedEvent(
@@ -171,6 +173,21 @@ public class BookingService {
     private Booking findWithDetails(Long id) {
         return bookingRepository.findWithDetailsById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", id));
+    }
+
+    /**
+     * Smallest free seat, so seats released by cancellations are reused instead of
+     * blindly taking {@code count + 1} (which collides with an existing seat).
+     */
+    private int nextAvailableSeat(Long tripId, int capacity) {
+        Set<Integer> usedSeats = new HashSet<>(
+                bookingRepository.findSeatNumbers(tripId, BookingStatus.CONFIRMED));
+        for (int seat = 1; seat <= capacity; seat++) {
+            if (!usedSeats.contains(seat)) {
+                return seat;
+            }
+        }
+        throw new BusinessException("No seats available on this trip");
     }
 
     private Map<Long, Long> confirmedCounts(List<Trip> trips) {

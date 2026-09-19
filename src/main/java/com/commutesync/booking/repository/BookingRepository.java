@@ -29,6 +29,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     long countByStatus(BookingStatus status);
 
+    @Query("""
+            SELECT b.seatNumber FROM Booking b
+            WHERE b.trip.id = :tripId AND b.status = :status AND b.seatNumber IS NOT NULL
+            """)
+    List<Integer> findSeatNumbers(@Param("tripId") Long tripId, @Param("status") BookingStatus status);
+
     List<Booking> findByTripIdAndStatus(Long tripId, BookingStatus status);
 
     @Query("""

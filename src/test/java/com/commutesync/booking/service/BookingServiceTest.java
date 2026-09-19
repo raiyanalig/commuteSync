@@ -94,6 +94,7 @@ class BookingServiceTest {
         when(tripRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trip));
         when(employeeRepository.findByEmail("raiyan@example.com")).thenReturn(Optional.of(employee));
         when(bookingRepository.countByTripIdAndStatus(1L, BookingStatus.CONFIRMED)).thenReturn(4L);
+        when(bookingRepository.findSeatNumbers(1L, BookingStatus.CONFIRMED)).thenReturn(List.of(1, 2, 3, 4));
         when(bookingRepository.findByTripIdAndEmployeeId(1L, 10L)).thenReturn(Optional.empty());
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -126,6 +127,7 @@ class BookingServiceTest {
         when(tripRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(trip));
         when(employeeRepository.findByEmail("raiyan@example.com")).thenReturn(Optional.of(employee));
         when(bookingRepository.countByTripIdAndStatus(1L, BookingStatus.CONFIRMED)).thenReturn(2L);
+        when(bookingRepository.findSeatNumbers(1L, BookingStatus.CONFIRMED)).thenReturn(List.of(1, 2));
         when(bookingRepository.findByTripIdAndEmployeeId(1L, 10L)).thenReturn(Optional.of(existing));
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

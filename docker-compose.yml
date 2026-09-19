@@ -3,18 +3,45 @@ services:
     image: postgres:16-alpine
     container_name: commutesync-postgres
     environment:
-      POSTGRES_DB: commutesync
-      POSTGRES_USER: commutesync
-      POSTGRES_PASSWORD: commutesync
+      POSTGRES_DB: ${DB_NAME:-commutesync}
+      POSTGRES_USER: ${DB_USER:-commutesync}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-commutesync}
     ports:
       - "5432:5432"
     volumes:
       - commutesync-pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U commutesync -d commutesync"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-commutesync} -d ${DB_NAME:-commutesync}"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: commutesync:latest
+    container_name: commutesync-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-commutesync}
+      DB_USER: ${DB_USER:-commutesync}
+      DB_PASSWORD: ${DB_PASSWORD:-commutesync}
+      JWT_SECRET: ${JWT_SECRET:-commutesync-default-dev-secret-key-change-in-production-please-1234567890}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-3600000}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
 volumes:
   commutesync-pgdata:
